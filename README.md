@@ -1,4 +1,4 @@
-# PyPSV - Probabilistic paleo secular variation curves with python
+# pypsv - Probabilistic PaleoSecular Variation curves with python
 
 ## Installation
 
