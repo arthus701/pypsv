@@ -1,5 +1,7 @@
 import numpy as np
 
+from pandas import Series
+
 import pymc as pm
 from pytensor import tensor as pt
 
@@ -7,8 +9,9 @@ from pymc.sampling import jax as pmj
 
 from pymagglobal.utils import dsh_basis, nez2dif
 
-from fieldmodels.fieldmodel import FieldModel
-from utils import get_curve, interp
+from .fieldmodels.fieldmodel import FieldModel
+from .utils import get_curve, interp
+from .calibration_curves import intcal20, shcal20, marine20
 
 JITTER = 1e-4
 default_prior_values = {
@@ -16,6 +19,15 @@ default_prior_values = {
     'I': (10, 150),
     'F': (8.25, 150),
 }
+
+age_types = [
+    "14C NH",
+    "14C SH",
+    "14C MA",
+    "absolute",
+    "uniform",
+    "Gaussian",
+]
 
 
 class PSVCurve(object):
@@ -235,24 +247,68 @@ class PSVCurve(object):
                 )
 
             for idx, row in self.data.iterrows():
-                x_points, pdf_points = get_curve(row)
-                cdf_points = np.cumsum(pdf_points)
+                if "14C" in row['Age type']:
+                    if row['Age type'] == '14C NH':
+                        calibration_curve = intcal20
+                    elif row['Age type'] == '14C SH':
+                        calibration_curve = shcal20
+                    elif row['Age type'] == '14C MA':
+                        calibration_curve = marine20
 
-                t_uni = pm.Uniform(
-                    f't_uniform_{idx}',
-                    lower=0.,
-                    upper=1.,
-                    size=1,
-                )
+                    x_points, pdf_points = get_curve(
+                        Series(
+                            data={
+                                '14C age': row['Age'],
+                                'Sigma 14C': row['dAge'],
+                            }
+                        ),
+                        calibration_curve=calibration_curve,
+                    )
+                    cdf_points = np.cumsum(pdf_points)
 
-                t = pm.Deterministic(
-                    f't_{idx}',
-                    interp(
-                        t_uni,
-                        cdf_points,
-                        x_points,
-                    ),
-                )
+                    t_uni = pm.Uniform(
+                        f't_uniform_{idx}',
+                        lower=0.,
+                        upper=1.,
+                        size=1,
+                    )
+
+                    t = pm.Deterministic(
+                        f't_{idx}',
+                        interp(
+                            t_uni,
+                            cdf_points,
+                            x_points,
+                        ),
+                    )
+                elif row['Age type'] == 'absolute':
+                    t = np.atleast_1d(row['Age'])
+                elif row['Age type'] == 'uniform':
+                    t_uni = pm.Uniform(
+                        f't_uniform_{idx}',
+                        lower=0.,
+                        upper=1.,
+                        size=1,
+                    )
+
+                    upper = 2 * row['dAge']
+                    lower = row['Age'] - row['dAge']
+                    t = pm.Deterministic(
+                        f't_{idx}',
+                        t_uni * upper - lower,
+                    )
+                elif row['Age type'] == 'Gaussian':
+                    t_cent = pm.Normal(
+                        f't_cent_{idx}',
+                        mu=0.,
+                        sigma=1.,
+                        size=1,
+                    )
+
+                    t = pm.Deterministic(
+                        f't_{idx}',
+                        t_cent * row['dAge'] + row['Age'],
+                    )
                 if (
                     'D' in self.components and not np.isnan(row['D'])
                 ):
@@ -344,14 +400,23 @@ class PSVCurve(object):
             raise RuntimeError("No usable data found in DataFrame.")
 
         for radiocarbon_attribute in [
-            "14C age",
-            "Sigma 14C",
-            "14C type",
+            'Age',
+            'dAge',
+            'Age type',
         ]:
             if radiocarbon_attribute not in list(data.columns):
                 raise RuntimeError(
                     f"No column '{radiocarbon_attribute}' found in DataFrame."
                 )
+
+        for age_type in data['Age type']:
+            if age_type not in age_types:
+                print(
+                    f"'{age_type}' is not a valid age type. Valid types are:"
+                )
+                for _type in age_types:
+                    print(_type)
+                exit()
 
         return data
 

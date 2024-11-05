@@ -38,6 +38,7 @@ for key, name in _curve_fnames.items():
 
 
 intcal20 = pd.read_csv(
+    data_dir + '/' + _curve_fnames['IntCal20'],
     header=11,
     sep=',',
     names=[
@@ -50,6 +51,7 @@ intcal20 = pd.read_csv(
 )
 
 marine20 = pd.read_csv(
+    data_dir + '/' + _curve_fnames['Marine20'],
     header=11,
     sep=',',
     names=[
@@ -62,6 +64,7 @@ marine20 = pd.read_csv(
 )
 
 shcal20 = pd.read_csv(
+    data_dir + '/' + _curve_fnames['SHCal20'],
     header=11,
     sep=',',
     names=[

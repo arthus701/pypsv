@@ -6,7 +6,7 @@ from pytensor import tensor as pt, shared
 from pytensor.tensor.math import Argmax
 from pytensor.link.jax.dispatch import jax_funcify
 
-from calibration_curves import intcal20
+from .calibration_curves import intcal20
 
 REARTH = 6371.2
 

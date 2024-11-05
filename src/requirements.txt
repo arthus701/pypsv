@@ -1,4 +1,8 @@
 appdirs
+arviz
+matplotlib
 numpy < 2
+pandas
 pymagglobal
 pymc
+pytensor
