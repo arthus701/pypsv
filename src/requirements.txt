@@ -1,3 +1,4 @@
+appdirs
 numpy < 2
-pymc
 pymagglobal
+pymc

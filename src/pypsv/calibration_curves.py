@@ -1,20 +1,43 @@
+import os
+from urllib.request import urlretrieve
+
+import warnings
+
+from appdirs import AppDirs
+
 import numpy as np
 import pandas as pd
 
 from scipy.interpolate import BSpline
 
+data_dir = AppDirs("pypsv").user_data_dir
 
-# TODO: auto-download of calibration curves
-_curve_names = {
+_curve_fnames = {
     'IntCal20': "intcal20.14c",
     'Marine20': "marine20.14c",
     'SHCal20': "shcal20.14c",
 }
 
-data_dir = '../dat/'
+if not os.path.exists(data_dir):
+    warnings.warn(
+        f"Data folder doesn't exist and will be created at '{data_dir}'.",
+        UserWarning,
+    )
+    os.makedirs(data_dir)
+for key, name in _curve_fnames.items():
+    filepath = data_dir + '/' + name
+    if not os.path.isfile(filepath):
+        warnings.warn(
+            f"{key} datafile doesn't exist and will be downloaded.",
+            UserWarning,
+        )
+        urlretrieve(
+            f"https://www.intcal.org/curves/{name}",
+            filepath,
+        )
+
 
 intcal20 = pd.read_csv(
-    data_dir + '/' + _curve_names['IntCal20'],
     header=11,
     sep=',',
     names=[
@@ -27,7 +50,6 @@ intcal20 = pd.read_csv(
 )
 
 marine20 = pd.read_csv(
-    data_dir + '/' + _curve_names['Marine20'],
     header=11,
     sep=',',
     names=[
@@ -40,7 +62,6 @@ marine20 = pd.read_csv(
 )
 
 shcal20 = pd.read_csv(
-    data_dir + '/' + _curve_names['SHCal20'],
     header=11,
     sep=',',
     names=[
