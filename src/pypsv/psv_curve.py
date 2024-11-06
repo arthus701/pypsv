@@ -100,7 +100,7 @@ class PSVCurve(object):
                     _prior_cov_f + JITTER * np.eye(len(self.curve_knots))
                 )
         else:
-            from utils import matern32
+            from .utils import matern32
 
             kalmag_lmax = 13
             kalmag_2000_coeffs = np.genfromtxt(
@@ -382,10 +382,11 @@ class PSVCurve(object):
                         observed=[0.],
                     )
 
-    def data_sanity_check(self, data):
+    def data_sanity_check(self, _data):
+        data = _data.copy()
         self.components = []
         for comp in 'DIF':
-            if comp in list(data.columns):
+            if comp in list(_data.columns):
                 self.components.append(comp)
 
                 if f"d{comp}" not in list(data.columns):
