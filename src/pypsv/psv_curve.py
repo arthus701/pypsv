@@ -431,7 +431,7 @@ class PSVCurve(object):
     ):
         self.setup_mcmodel()
         with self.mcModel:
-            idata = pmj.sample_numpyro_nuts(
+            iData = pmj.sample_numpyro_nuts(
                 draws,
                 tune=tune,
                 progressbar=progressbar,
@@ -440,4 +440,13 @@ class PSVCurve(object):
                 postprocessing_backend='cpu',
             )
 
-        return idata
+        iData.observed_data['curve_knots'] = self.curve_knots
+        iData.observed_data['data_labels'] = self.data.index.values
+
+        absolute_data = self.data[
+            self.data['Age type'] == 'absolute'
+        ]
+        iData.observed_data['absolute_labels'] = absolute_data.index.values
+        iData.observed_data['absolute_dates'] = absolute_data['Age'].values
+
+        return iData
