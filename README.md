@@ -11,7 +11,7 @@ pip3 install pymagglobal --extra-index-url https://public:5mz_iyigu-WE3HySBH1J@g
 With `pymagglobal` installed, you may run:
 
 ```code
-pip3 install "git+https://github.com/arthus701/pypsv.git/#egg=pypsv&subdirectory=src/
+pip3 install "git+https://github.com/arthus701/pypsv.git/#egg=pypsv&subdirectory=src/"
 ```
 
 to install `pypsv` from the git repo. You can also clone this repository, go to the `src/` directory and run
