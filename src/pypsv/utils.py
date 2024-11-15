@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import ndarray
 
 import jax.numpy as jnp
 from pytensor import tensor as pt, shared
@@ -94,12 +95,12 @@ def interp(_x, _xp, _fp):
     function will not extrapolate, but use the edge values for points outside
     of _xp.
     """
-    if isinstance(_xp, np.ndarray) or isinstance(_xp, list):
+    if isinstance(_xp, (ndarray, list)):
         xp = shared(_xp)
     else:
         xp = _xp
 
-    if isinstance(_fp, np.ndarray) or isinstance(_fp, list):
+    if isinstance(_fp, (ndarray, list)):
         fp = shared(_fp)
     else:
         fp = _fp
