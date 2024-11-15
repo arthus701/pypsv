@@ -7,18 +7,15 @@ from pytensor import tensor as pt
 
 from pymc.sampling import jax as pmj
 
-from pymagglobal.utils import dsh_basis, nez2dif
+from pymagglobal.utils import dsh_basis
 
 from .fieldmodels.fieldmodel import FieldModel
 from .utils import get_curve, interp
 from .calibration_curves import intcal20, shcal20, marine20
 
 JITTER = 1e-4
-default_prior_values = {
-    'D': (20, 150),
-    'I': (10, 150),
-    'F': (8.25, 150),
-}
+default_prior_values = (8.25, 150)
+
 
 age_types = [
     "14C NH",
@@ -66,39 +63,15 @@ class PSVCurve(object):
                 base,
                 coeffs,
             )
-            if 'D' in self.components:
-                d = np.rad2deg(
-                    np.arctan2(nez[1], nez[0])
-                )
-                self.prior_mean_d = d.mean(axis=1)
-                _prior_cov_d = np.cov(d)
-                self.prior_chol_d = np.linalg.cholesky(
-                    _prior_cov_d + JITTER * np.eye(len(self.curve_knots))
-                )
-            if 'I' in self.components:
-                i = np.rad2deg(
-                    np.arctan2(
-                        nez[2],
-                        np.sqrt(nez[0]**2 + nez[1]**2),
-                    )
-                ),
-                self.prior_mean_i = i.mean(axis=1)
-                _prior_cov_i = np.cov(i)
-                self.prior_chol_i = np.linalg.cholesky(
-                    _prior_cov_i + JITTER * np.eye(len(self.curve_knots))
-                )
-            if 'F' in self.components:
-                f = np.sqrt(
-                    np.sum(
-                        nez**2,
-                        axis=0,
-                    )
-                )
-                self.prior_mean_f = f.mean(axis=1)
-                _prior_cov_f = np.cov(f)
-                self.prior_chol_f = np.linalg.cholesky(
-                    _prior_cov_f + JITTER * np.eye(len(self.curve_knots))
-                )
+
+            self.prior_mean = nez.mean(axis=2).T.flatten()
+            _prior_cov = np.cov(
+                nez.transpose(1, 0, 2).reshape(-1, coeffs.shape[-1])
+            )
+            self.prior_chol = np.linalg.cholesky(
+                _prior_cov + JITTER * np.eye(3 * len(self.curve_knots))
+            )
+
         else:
             from .utils import matern32
 
@@ -116,135 +89,70 @@ class PSVCurve(object):
             ]
             base = dsh_basis(kalmag_lmax, z_loc)
 
-            nez_kalman = kalmag_2000_coeffs @ base
-            d_kalman, i_kalman, f_kalman = nez2dif(*nez_kalman)
-            f_kalman /= 1e3
+            nez_kalman = kalmag_2000_coeffs @ base / 1e3
 
-            if 'D' in self.components:
-                _prior_cor_d = matern32(
-                    self.curve_knots,
-                    kalmag_knot,
-                    sigma=self.prior_model['D'][0],
-                    tau=self.prior_model['D'][1],
-                )
+            _prior_cor = matern32(
+                self.curve_knots,
+                kalmag_knot,
+                sigma=self.prior_model[0],
+                tau=self.prior_model[1],
+            )
 
-                self.prior_mean_d = (
-                    _prior_cor_d.flatten()
-                    * d_kalman
-                    / self.prior_model['I'][0]**2
-                )
+            nez_mean = -28 * base[0]
 
-                _prior_cov_d = matern32(
-                    self.curve_knots,
-                    sigma=self.prior_model['D'][0],
-                    tau=self.prior_model['D'][1],
-                ) - _prior_cor_d @ _prior_cor_d.T / self.prior_model['D'][0]**2
+            self.prior_mean = (
+                nez_mean[:, None]
+                + (
+                    _prior_cor.flatten()[None, :]
+                    * (nez_kalman[:, None] - nez_mean[:, None])
+                    / self.prior_model[0]**2
+                )
+            ).T.flatten()
 
-                self.prior_chol_d = np.linalg.cholesky(
-                    _prior_cov_d + JITTER * np.eye(len(self.curve_knots))
-                )
-            if 'I' in self.components:
-                # Merril, 1998, eq. 3.3.4
-                prior_mean_i = (
-                    np.deg2rad(
-                        np.arctan(2 * np.tan(self.loc[0]))
-                    )
-                )
-                _prior_cor_i = matern32(
-                    self.curve_knots,
-                    kalmag_knot,
-                    sigma=self.prior_model['I'][0],
-                    tau=self.prior_model['I'][1],
-                )
+            _prior_cov = matern32(
+                self.curve_knots,
+                sigma=self.prior_model[0],
+                tau=self.prior_model[1],
+            ) - _prior_cor @ _prior_cor.T / self.prior_model[0]**2
 
-                self.prior_mean_i = (
-                    prior_mean_i * np.ones(len(self.curve_knots))
+            prior_chol = np.linalg.cholesky(
+                _prior_cov + JITTER * np.eye(len(self.curve_knots))
+            )
+            zero_block = np.zeros(
+                (len(self.curve_knots), len(self.curve_knots)),
+            )
+            prior_chol = np.array(
+                [
+                    [prior_chol, zero_block, zero_block],
+                    [zero_block, prior_chol, zero_block],
+                    [zero_block, zero_block, prior_chol],
+                ],
+            )
+            self.prior_chol = (
+                prior_chol
+                .transpose(2, 0, 3, 1)
+                .reshape(
+                    3 * len(self.curve_knots), 3 * len(self.curve_knots)
                 )
-                self.prior_mean_i += (
-                    _prior_cor_i.flatten()
-                    * (f_kalman - prior_mean_i)
-                    / self.prior_model['I'][0]**2
-                )
-
-                _prior_cov_i = matern32(
-                    self.curve_knots,
-                    sigma=self.prior_model['I'][0],
-                    tau=self.prior_model['I'][1],
-                ) - _prior_cor_i @ _prior_cor_i.T / self.prior_model['I'][0]**2
-
-                self.prior_chol_i = np.linalg.cholesky(
-                    _prior_cov_i + JITTER * np.eye(len(self.curve_knots))
-                )
-            if 'F' in self.components:
-                # Merril, 1998, eq. 3.4.5
-                prior_mean_f = 28 * np.sqrt((1 + 3*np.cos(self.loc[0])**2))
-                _prior_cor_f = matern32(
-                    self.curve_knots,
-                    kalmag_knot,
-                    sigma=self.prior_model['F'][0],
-                    tau=self.prior_model['F'][1],
-                )
-
-                self.prior_mean_f = (
-                    prior_mean_f * np.ones(len(self.curve_knots))
-                )
-                self.prior_mean_f += (
-                    _prior_cor_f.flatten()
-                    * (f_kalman - prior_mean_f)
-                    / self.prior_model['F'][0]**2
-                )
-
-                _prior_cov_f = matern32(
-                    self.curve_knots,
-                    sigma=self.prior_model['F'][0],
-                    tau=self.prior_model['F'][1],
-                ) - _prior_cor_f @ _prior_cor_f.T / self.prior_model['F'][0]**2
-
-                self.prior_chol_f = np.linalg.cholesky(
-                    _prior_cov_f + JITTER * np.eye(len(self.curve_knots))
-                )
+            )
 
     def setup_mcmodel(self):
         with pm.Model() as self.mcModel:
-            if 'D' in self.components:
-                d_cent = pm.Normal(
-                    'd_cent',
-                    mu=0,
-                    sigma=1,
-                    size=(
-                        len(self.curve_knots),
-                    ),
-                )
-                d_at_knots = pm.Deterministic(
-                    'd_at_knots',
-                    pt.dot(self.prior_chol_d, d_cent) + self.prior_mean_d,
-                )
-            if 'I' in self.components:
-                i_cent = pm.Normal(
-                    'i_cent',
-                    mu=0,
-                    sigma=1,
-                    size=(
-                        len(self.curve_knots),
-                    ),
-                )
-                i_at_knots = pm.Deterministic(
-                    'i_at_knots',
-                    pt.dot(self.prior_chol_i, i_cent) + self.prior_mean_i,
-                )
-            if 'F' in self.components:
-                f_cent = pm.Normal(
-                    'f_cent',
-                    mu=0,
-                    sigma=1,
-                    size=(
-                        len(self.curve_knots),
-                    ),
-                )
-                f_at_knots = pm.Deterministic(
-                    'f_at_knots',
-                    pt.dot(self.prior_chol_f, f_cent) + self.prior_mean_f,
-                )
+            nez_cent = pm.Normal(
+                'nez_cent',
+                mu=0,
+                sigma=1,
+                size=(
+                    3 * len(self.curve_knots),
+                ),
+            )
+            nez_at_knots = pm.Deterministic(
+                'nez_at_knots',
+                pt.reshape(
+                    pt.dot(self.prior_chol, nez_cent) + self.prior_mean,
+                    (len(self.curve_knots), 3),
+                ),
+            )
 
             for idx, row in self.data.iterrows():
                 if "14C" in row['Age type']:
@@ -282,7 +190,7 @@ class PSVCurve(object):
                         ),
                     )
                 elif row['Age type'] == 'absolute':
-                    t = np.atleast_1d(row['Age'])
+                    t = pt.as_tensor([row['Age']])
                 elif row['Age type'] == 'uniform':
                     t_uni = pm.Uniform(
                         f't_uniform_{idx}',
@@ -309,21 +217,30 @@ class PSVCurve(object):
                         f't_{idx}',
                         t_cent * row['dAge'] + row['Age'],
                     )
+
+                nez_at_t = interp(
+                    t,
+                    self.curve_knots,
+                    nez_at_knots,
+                )
+
                 if (
                     'D' in self.components and not np.isnan(row['D'])
                 ):
                     d_at_t = pm.Deterministic(
                         f'd_at_t_{idx}',
-                        interp(
-                            t,
-                            self.curve_knots,
-                            d_at_knots,
+                        pt.rad2deg(
+                            pt.arctan2(
+                                nez_at_t[:, 1],
+                                nez_at_t[:, 0],
+                            ),
                         ),
                     )
-
+                    _rD = d_at_t - row['D']
                     rD = pm.Deterministic(
                         f'rD_{idx}',
-                        (d_at_t - row['D']) / row['dI'],
+                        ((_rD - 360 * (_rD > 180) + 360 * (-180 > _rD)))
+                        / row['dD'],
                     )
 
                     pm.StudentT(
@@ -336,12 +253,19 @@ class PSVCurve(object):
                 if (
                     'I' in self.components and not np.isnan(row['I'])
                 ):
+                    _h = pt.sqrt(
+                        pt.sum(
+                            pt.square(nez_at_t[:, 0:2]),
+                            axis=1,
+                        ),
+                    )
                     i_at_t = pm.Deterministic(
                         f'i_at_t_{idx}',
-                        interp(
-                            t,
-                            self.curve_knots,
-                            i_at_knots,
+                        pt.rad2deg(
+                            pt.arctan(
+                                nez_at_t[2]
+                                / _h,
+                            ),
                         ),
                     )
 
@@ -362,10 +286,11 @@ class PSVCurve(object):
                 ):
                     f_at_t = pm.Deterministic(
                         f'f_at_t_{idx}',
-                        interp(
-                            t,
-                            self.curve_knots,
-                            f_at_knots,
+                        pt.sqrt(
+                            pt.sum(
+                                pt.square(nez_at_t),
+                                axis=1,
+                            ),
                         ),
                     )
 
