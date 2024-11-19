@@ -81,7 +81,7 @@ class PSVCurve(object):
                         nez[2],
                         np.sqrt(nez[0]**2 + nez[1]**2),
                     )
-                ),
+                )
                 self.prior_mean_i = i.mean(axis=1)
                 _prior_cov_i = np.cov(i)
                 self.prior_chol_i = np.linalg.cholesky(
