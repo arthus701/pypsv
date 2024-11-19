@@ -263,7 +263,7 @@ class PSVCurve(object):
                         f'i_at_t_{idx}',
                         pt.rad2deg(
                             pt.arctan(
-                                nez_at_t[2]
+                                nez_at_t[:, 2]
                                 / _h,
                             ),
                         ),
@@ -365,6 +365,7 @@ class PSVCurve(object):
                 postprocessing_backend='cpu',
             )
 
+        iData.observed_data['loc'] = self.loc
         iData.observed_data['curve_knots'] = self.curve_knots
         iData.observed_data['data_labels'] = self.data.index.values
 
