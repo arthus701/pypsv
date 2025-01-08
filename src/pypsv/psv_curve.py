@@ -14,8 +14,9 @@ from .utils import get_curve, interp
 from .calibration_curves import intcal20, shcal20, marine20
 
 JITTER = 1e-4
-default_prior_values = (8.25, 150)
-
+AXIAL_DIPOLE_PRIOR = -30
+DEFAULT_PRIOR_VALUES = (8.25, 150)
+MODEL_INCREASE_FACTOR = 2
 
 age_types = [
     "14C NH",
@@ -38,7 +39,7 @@ class PSVCurve(object):
         self.loc = loc
         self.curve_knots = curve_knots
         if prior_model is None:
-            self.prior_model = default_prior_values
+            self.prior_model = DEFAULT_PRIOR_VALUES
         else:
             self.prior_model = prior_model
 
@@ -68,7 +69,7 @@ class PSVCurve(object):
             _prior_cov = np.cov(
                 nez.transpose(1, 0, 2).reshape(-1, coeffs.shape[-1])
             )
-            self.prior_chol = np.linalg.cholesky(
+            self.prior_chol = MODEL_INCREASE_FACTOR * np.linalg.cholesky(
                 _prior_cov + JITTER * np.eye(3 * len(self.curve_knots))
             )
 
@@ -98,7 +99,7 @@ class PSVCurve(object):
                 tau=self.prior_model[1],
             )
 
-            nez_mean = -28 * base[0]
+            nez_mean = AXIAL_DIPOLE_PRIOR * base[0]
 
             self.prior_mean = (
                 nez_mean[:, None]
@@ -353,19 +354,25 @@ class PSVCurve(object):
         progressbar=True,
         chains=4,
         target_accept=0.95,
+        **kwargs,
     ):
+        if progressbar:
+            print("Setting up PyMC model...")
         self.setup_mcmodel()
+        if progressbar:
+            print("...model setup done.")
         with self.mcModel:
             iData = pmj.sample_numpyro_nuts(
                 draws,
                 tune=tune,
                 progressbar=progressbar,
                 chains=chains,
-                target_accept=0.95,
+                target_accept=target_accept,
                 postprocessing_backend='cpu',
+                **kwargs,
             )
 
-        iData.observed_data['loc'] = self.loc
+        iData.observed_data['loc'] = np.array(self.loc)
         iData.observed_data['curve_knots'] = self.curve_knots
         iData.observed_data['data_labels'] = self.data.index.values
 
