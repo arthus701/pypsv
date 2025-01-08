@@ -8,6 +8,7 @@ def generate_curve_output(
     iData,
     thin=1,
     type='numpy',
+    output_nez=False,
 ):
     knots = iData.observed_data['curve_knots'].values
 
@@ -26,13 +27,14 @@ def generate_curve_output(
     d_samples, i_samples, f_samples = nez2dif(*nez_samples)
 
     samples = {
-        'N': nez_samples[0],
-        'E': nez_samples[1],
-        'Z': nez_samples[2],
         'D': d_samples,
         'I': i_samples,
         'F': f_samples,
     }
+    if output_nez:
+        samples['N'] = nez_samples[0]
+        samples['E'] = nez_samples[1]
+        samples['Z'] = nez_samples[2]
 
     if type == 'numpy':
         return knots, samples
@@ -51,6 +53,7 @@ def generate_curve_output(
         )
 
 
+# TODO
 def generate_data_output(
     iData,
     thin=1,
