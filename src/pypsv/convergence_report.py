@@ -7,7 +7,7 @@ import arviz as az
 from matplotlib import pyplot as plt
 
 
-def calc_summary_and_print_diagnostics(iData):
+def calc_summary_and_print_diagnostics(iData, threshold=1.1):
     summary = az.summary(iData)
     summary.index.names = ['Name']
     summary.reset_index(inplace=True)
@@ -21,7 +21,7 @@ def calc_summary_and_print_diagnostics(iData):
 
     names = []
     for it in summary['Name'][
-        np.argwhere(summary['r_hat'].values > 1.1).flatten()
+        np.argwhere(summary['r_hat'].values > threshold).flatten()
     ]:
         names.append(it)
         cnt += 1
@@ -42,12 +42,12 @@ def calc_summary_and_print_diagnostics(iData):
         "divergences."
     )
     print(
-        f"There were {cnt} random variables with rhat > 1.1."
+        f"There were {cnt} random variables with rhat > {threshold:.2f}."
     )
     if 0 < cnt:
         print(
             "Here's a list of the names of the random variables with "
-            "rhat > 1.1:"
+            f"rhat > {threshold:.2f}:"
         )
         print(names)
 
