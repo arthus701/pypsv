@@ -8,6 +8,21 @@ from matplotlib import pyplot as plt
 
 
 def calc_summary_and_print_diagnostics(iData, threshold=1.1):
+    """
+    Calculate summary statistics and print diagnostics for the input data.
+
+    Parameters
+    ----------
+    iData : object
+        Input data object containing posterior and sample statistics.
+    threshold : float, optional
+        Threshold for r_hat values to identify problematic variables. Default is 1.1.
+
+    Returns
+    -------
+    summary : DataFrame
+        DataFrame containing summary statistics for the input data. The index is reset to include a 'Name' column.
+    """
     summary = az.summary(iData)
     summary.index.names = ['Name']
     summary.reset_index(inplace=True)
