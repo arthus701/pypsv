@@ -16,12 +16,14 @@ def calc_summary_and_print_diagnostics(iData, threshold=1.1):
     iData : object
         Input data object containing posterior and sample statistics.
     threshold : float, optional
-        Threshold for r_hat values to identify problematic variables. Default is 1.1.
+        Threshold for r_hat values to identify problematic variables. Default
+        is 1.1.
 
     Returns
     -------
     summary : DataFrame
-        DataFrame containing summary statistics for the input data. The index is reset to include a 'Name' column.
+        DataFrame containing summary statistics for the input data. The index
+        is reset to include a 'Name' column.
     """
     summary = az.summary(iData)
     summary.index.names = ['Name']
