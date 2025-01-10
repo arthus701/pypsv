@@ -20,18 +20,23 @@ def generate_curve_output(
     thin : int, optional
         Thinning factor for the samples, default is 1.
     type : str, optional
-        Type of output to generate, either 'numpy' or 'pandas'. Default is 'numpy'.
+        Type of output to generate, either 'numpy' or 'pandas'. Default is
+        'numpy'.
     output_nez : bool, optional
         If True, include N, E, Z components in the output. Default is False.
 
     Returns
     -------
     knots : ndarray
-        Array of knot points from the observed data. Only included if type is 'numpy'.
+        Array of knot points from the observed data. Only included if type is
+        'numpy'.
     samples : dict or DataFrame
-        Dictionary or DataFrame containing the generated samples. The dictionary keys are:
-        'D', 'I', 'F' for dif components, and optionally 'N', 'E', 'Z' if output_nez is True.
-        If type is 'pandas', a DataFrame is returned with columns for each sample and statistics.
+        Dictionary or DataFrame containing the generated samples. The
+        dictionary keys are:
+        'D', 'I', 'F' for dif components, and optionally 'N', 'E', 'Z' if
+        output_nez is True.
+        If type is 'pandas', a DataFrame is returned with columns for each
+        sample and statistics.
     """
     knots = iData.observed_data['curve_knots'].values
 
@@ -93,8 +98,9 @@ def generate_data_output(
     Returns
     -------
     data : dict
-        Dictionary containing the generated data for each label. Each label's data is a dictionary
-        with keys 't', 'D', 'I', 'F' representing the time and dif components respectively.
+        Dictionary containing the generated data for each label. Each label's
+        data is a dictionary with keys 't', 'D', 'I', 'F' representing the time
+        and dif components respectively.
     """
     data = {}
     for label in iData.observed_data['data_labels'].values:
