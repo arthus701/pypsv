@@ -356,14 +356,14 @@ class PSVCurve(object):
         if len(self.components) == 0:
             raise RuntimeError("No usable data found in DataFrame.")
 
-        for radiocarbon_attribute in [
+        for age_column in [
             'Age',
             'dAge',
             'Age type',
         ]:
-            if radiocarbon_attribute not in list(data.columns):
+            if age_column not in list(data.columns):
                 raise RuntimeError(
-                    f"No column '{radiocarbon_attribute}' found in DataFrame."
+                    f"No column '{age_column}' found in DataFrame."
                 )
 
         for age_type in data['Age type']:
