@@ -1,6 +1,13 @@
+import os
+from urllib.request import urlretrieve
+
+import warnings
+
 import numpy as np
 
 from pandas import Series
+
+from appdirs import AppDirs
 
 import pymc as pm
 from pytensor import tensor as pt
@@ -26,6 +33,29 @@ age_types = [
     "uniform",
     "Gaussian",
 ]
+
+
+data_dir = AppDirs("pypsv").user_data_dir
+
+if not os.path.exists(data_dir):
+    warnings.warn(
+        f"Data folder doesn't exist and will be created at '{data_dir}'.",
+        UserWarning,
+    )
+    os.makedirs(data_dir)
+
+kalmag_filepath = data_dir + '/' + 'Kalmag_2000_CORE_MEAN_Radius_6371.2.txt'
+
+if not os.path.isfile(kalmag_filepath):
+    warnings.warn(
+        "Kalmag datafile doesn't exist and will be downloaded.",
+        UserWarning,
+    )
+    urlretrieve(
+        "https://nextcloud.gfz.de/s/5RQgCPxWqHMqmTB/"
+        "download/Kalmag_2000_CORE_MEAN_Radius_6371.2.txt",
+        kalmag_filepath,
+    )
 
 
 class PSVCurve(object):
@@ -78,7 +108,7 @@ class PSVCurve(object):
 
             kalmag_lmax = 13
             kalmag_2000_coeffs = np.genfromtxt(
-                '../dat/Kalmag_2000_CORE_MEAN_Radius_6371.2.txt'
+                kalmag_filepath,
             )
             kalmag_knot = np.atleast_1d(
                 np.copy(
