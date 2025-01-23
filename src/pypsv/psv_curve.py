@@ -230,11 +230,11 @@ class PSVCurve(object):
                         size=1,
                     )
 
-                    upper = 2 * row['dAge']
-                    lower = row['Age'] - row['dAge']
+                    width = 2 * row['dAge']
+                    offset = row['Age'] - row['dAge']
                     t = pm.Deterministic(
                         f't_{idx}',
-                        t_uni * upper - lower,
+                        t_uni * width + offset,
                     )
                 elif row['Age type'] == 'Gaussian':
                     t_cent = pm.Normal(
