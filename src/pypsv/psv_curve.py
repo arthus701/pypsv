@@ -23,7 +23,7 @@ from .calibration_curves import intcal20, shcal20, marine20
 JITTER = 1e-4
 AXIAL_DIPOLE_PRIOR = -30
 DEFAULT_PRIOR_VALUES = (15, 150)
-MODEL_INCREASE_FACTOR = 2
+MODEL_INCREASE_FACTOR = 1.5
 
 age_types = [
     "14C NH",
