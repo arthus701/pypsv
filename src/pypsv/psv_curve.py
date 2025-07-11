@@ -16,14 +16,10 @@ from pymc.sampling import jax as pmj
 
 from pymagglobal.utils import dsh_basis
 
-from .fieldmodels.fieldmodel import FieldModel
-from .utils import get_curve, interp
-from .calibration_curves import intcal20, shcal20, marine20
-
-JITTER = 1e-4
-AXIAL_DIPOLE_PRIOR = -30
-DEFAULT_PRIOR_VALUES = (15, 150)
-MODEL_INCREASE_FACTOR = 1.5
+from pypsv.fieldmodels.fieldmodel import FieldModel
+from pypsv.utils import get_curve, interp
+from pypsv.calibration_curves import intcal20, shcal20, marine20
+from pypsv import parameters
 
 age_types = [
     "14C NH",
@@ -69,7 +65,7 @@ class PSVCurve(object):
         self.loc = loc
         self.curve_knots = curve_knots
         if prior_model is None:
-            self.prior_model = DEFAULT_PRIOR_VALUES
+            self.prior_model = parameters.DEFAULT_PRIOR_VALUES
         else:
             self.prior_model = prior_model
 
@@ -99,9 +95,12 @@ class PSVCurve(object):
             _prior_cov = np.cov(
                 nez.transpose(1, 0, 2).reshape(-1, coeffs.shape[-1])
             )
-            self.prior_chol = MODEL_INCREASE_FACTOR * np.linalg.cholesky(
-                _prior_cov + JITTER * np.eye(3 * len(self.curve_knots))
-            )
+
+            self.prior_chol = parameters.MODEL_INCREASE_FACTOR * \
+                np.linalg.cholesky(
+                    _prior_cov
+                    + parameters.JITTER * np.eye(3 * len(self.curve_knots))
+                )
 
         else:
             from .utils import matern32
@@ -129,7 +128,7 @@ class PSVCurve(object):
                 tau=self.prior_model[1],
             )
 
-            nez_mean = AXIAL_DIPOLE_PRIOR * base[0]
+            nez_mean = parameters.AXIAL_DIPOLE_PRIOR * base[0]
 
             self.prior_mean = (
                 nez_mean[:, None]
@@ -147,7 +146,7 @@ class PSVCurve(object):
             ) - _prior_cor @ _prior_cor.T / self.prior_model[0]**2
 
             prior_chol = np.linalg.cholesky(
-                _prior_cov + JITTER * np.eye(len(self.curve_knots))
+                _prior_cov + parameters.JITTER * np.eye(len(self.curve_knots))
             )
             zero_block = np.zeros(
                 (len(self.curve_knots), len(self.curve_knots)),
