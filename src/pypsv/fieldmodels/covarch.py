@@ -14,31 +14,32 @@ from .fieldmodel import FieldModel
 
 data_dir = AppDirs("pypsv").user_data_dir
 
-if not os.path.exists(data_dir):
-    warnings.warn(
-        f"Data folder doesn't exist and will be created at '{data_dir}'.",
-        UserWarning,
-    )
-    os.makedirs(data_dir)
-
-filepath = data_dir + '/' + 'covarch_ensemble.npz'
-
-if not os.path.isfile(filepath):
-    warnings.warn(
-        "cov-arch ensemble datafile doesn't exist and will be downloaded."
-        " This may take some time.",
-        UserWarning,
-    )
-    urlretrieve(
-        "https://nextcloud.gfz.de/s/PxrdsbqXmcLReAC/"
-        "download/covarch_ensemble.npz",
-        filepath,
-    )
-
 
 class CovArch(FieldModel):
     def __init__(self):
-        with np.load(filepath) as fh:
+        if not os.path.exists(data_dir):
+            warnings.warn(
+                "Data folder doesn't exist and will be created at "
+                f"'{data_dir}'.",
+                UserWarning,
+            )
+            os.makedirs(data_dir)
+
+        filepath = data_dir + '/' + 'covarch_ensemble.npz'
+
+        if not os.path.isfile(filepath):
+            warnings.warn(
+                "cov-arch ensemble datafile doesn't exist and will be "
+                "downloaded. This may take some time. The file will be written"
+                f" to {filepath}",
+                UserWarning,
+            )
+            urlretrieve(
+                "https://nextcloud.gfz.de/s/PxrdsbqXmcLReAC/"
+                "download/covarch_ensemble.npz",
+                filepath,
+            )
+        with np.load(self.filepath) as fh:
             self._knots = fh['knots']
 
             coeffs = fh['samples'].transpose(1, 0, 2)

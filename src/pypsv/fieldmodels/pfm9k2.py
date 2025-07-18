@@ -9,36 +9,37 @@ import numpy as np
 
 from scipy.interpolate import BSpline
 
-from .fieldmodel import FieldModel
+from pypsv.fieldmodels.fieldmodel import FieldModel
 
 
 data_dir = AppDirs("pypsv").user_data_dir
 
-if not os.path.exists(data_dir):
-    warnings.warn(
-        f"Data folder doesn't exist and will be created at '{data_dir}'.",
-        UserWarning,
-    )
-    os.makedirs(data_dir)
-
-filepath = data_dir + '/' + 'pfm9k2_ensemble.npz'
-
-if not os.path.isfile(filepath):
-    warnings.warn(
-        "pfm9k.2 ensemble datafile doesn't exist and will be downloaded."
-        " This may take some time.",
-        UserWarning,
-    )
-    urlretrieve(
-        "https://nextcloud.gfz.de/s/ytQTX3Hjcr3YNfZ/"
-        "download/pfm9k2_ensemble.npz",
-        filepath,
-    )
-
 
 class PFM9k2(FieldModel):
     def __init__(self):
-        with np.load(filepath) as fh:
+        if not os.path.exists(data_dir):
+            warnings.warn(
+                "Data folder doesn't exist and will be created at "
+                f"'{data_dir}'.",
+                UserWarning,
+            )
+            os.makedirs(data_dir)
+
+        filepath = data_dir + '/' + 'pfm9k2_ensemble.npz'
+
+        if not os.path.isfile(filepath):
+            warnings.warn(
+                "pfm9k.2 ensemble datafile doesn't exist and will be "
+                "downloaded. This may take some time. The file will be written"
+                f" to {filepath}",
+                UserWarning,
+            )
+            urlretrieve(
+                "https://nextcloud.gfz.de/s/ytQTX3Hjcr3YNfZ/"
+                "download/pfm9k2_ensemble.npz",
+                filepath,
+            )
+        with np.load(self.filepath) as fh:
             self._knots = fh['knots']
 
             coeffs = fh['samples'].transpose(1, 0, 2)
