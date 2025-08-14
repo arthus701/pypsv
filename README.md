@@ -27,3 +27,9 @@ pip3 install -e .
 ```
 
 if you want an editable installation.
+
+## Citation
+
+For now, an accompanying manuscript is still under review. Until it becomes available, please cite the zenodo release:
+
+[![DOI](https://zenodo.org/badge/883736343.svg)](https://doi.org/10.5281/zenodo.16874929)
