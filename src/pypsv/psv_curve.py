@@ -60,6 +60,7 @@ class PSVCurve(object):
         loc,
         curve_knots,
         data,
+        custom_data=None,
         prior_model=None,
     ):
         self.loc = loc
@@ -70,6 +71,7 @@ class PSVCurve(object):
             self.prior_model = prior_model
 
         self.data = self.data_sanity_check(data)
+        self.custom_data = custom_data
 
         self.setup_prior()
 
@@ -336,6 +338,11 @@ class PSVCurve(object):
                         sigma=1.,
                         observed=[0.],
                     )
+            if self.custom_data is not None:
+                self.custom_data.inject_into_model(
+                    self.curve_knots,
+                    nez_at_knots,
+                )
 
     def data_sanity_check(self, _data):
         data = _data.copy()
