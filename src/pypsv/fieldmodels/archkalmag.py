@@ -29,7 +29,7 @@ class ArchKalmag8k(FieldModel):
 
         if not os.path.isfile(filepath):
             warnings.warn(
-                "ArchKalmag14k ensemble datafile doesn't exist and will be "
+                "ArchKalmag8k ensemble datafile doesn't exist and will be "
                 " This may take some time. The file will be written to "
                 f"{filepath}",
                 UserWarning,
@@ -138,10 +138,13 @@ if __name__ == '__main__':
     plt.plot(
         akm8k.knots,
         akm8k.coeffs[:, 0, :].mean(axis=-1),
+        label='ArchKalmag8k',
     )
 
     plt.plot(
         akm14k.knots,
         akm14k(akm14k.knots)[:, 0, :].mean(axis=-1),
+        label='ArchKalmag14k',
     )
+    plt.legend()
     plt.show()

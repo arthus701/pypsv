@@ -39,7 +39,7 @@ class PFM9k2(FieldModel):
                 "download/pfm9k2_ensemble.npz",
                 filepath,
             )
-        with np.load(self.filepath) as fh:
+        with np.load(filepath) as fh:
             self._knots = fh['knots']
 
             coeffs = fh['samples'].transpose(1, 0, 2)

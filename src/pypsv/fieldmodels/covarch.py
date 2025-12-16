@@ -9,7 +9,7 @@ import numpy as np
 
 from scipy.interpolate import BSpline
 
-from .fieldmodel import FieldModel
+from pypsv.fieldmodels.fieldmodel import FieldModel
 
 
 data_dir = AppDirs("pypsv").user_data_dir
@@ -39,7 +39,7 @@ class CovArch(FieldModel):
                 "download/covarch_ensemble.npz",
                 filepath,
             )
-        with np.load(self.filepath) as fh:
+        with np.load(filepath) as fh:
             self._knots = fh['knots']
 
             coeffs = fh['samples'].transpose(1, 0, 2)
@@ -80,6 +80,13 @@ if __name__ == '__main__':
     plt.plot(
         covarch.knots,
         covarch.coeffs[:, 0, 0],
+        color='C0',
+    )
+    plt.plot(
+        covarch.knots,
+        covarch.coeffs[:, 0, :10],
+        color='C0',
+        alpha=0.1,
     )
 
     plt.plot(

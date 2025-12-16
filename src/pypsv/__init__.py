@@ -16,4 +16,4 @@ __all__ = [
     'fieldmodels', 'PSVCurve', 'parameters', 'utils', 'calibration_curves',
 ]
 
-__version__ = "1.0.0"
+__version__ = "1.2.0"

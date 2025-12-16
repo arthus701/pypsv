@@ -59,8 +59,6 @@ class PSVCurve(object):
         self,
         loc,
         curve_knots,
-        data,
-        custom_data=None,
         prior_model=None,
     ):
         self.loc = loc
@@ -69,9 +67,6 @@ class PSVCurve(object):
             self.prior_model = parameters.DEFAULT_PRIOR_VALUES
         else:
             self.prior_model = prior_model
-
-        self.data = self.data_sanity_check(data)
-        self.custom_data = custom_data
 
         self.setup_prior()
 
@@ -157,7 +152,7 @@ class PSVCurve(object):
                 [
                     [prior_chol, zero_block, zero_block],
                     [zero_block, prior_chol, zero_block],
-                    [zero_block, zero_block, prior_chol],
+                    [zero_block, zero_block, 2 * prior_chol],
                 ],
             )
             self.prior_chol = (
@@ -385,6 +380,8 @@ class PSVCurve(object):
 
     def sample(
         self,
+        data,
+        custom_data=None,
         draws=500,
         tune=1000,
         progressbar=True,
@@ -392,6 +389,12 @@ class PSVCurve(object):
         target_accept=0.95,
         **kwargs,
     ):
+        if progressbar:
+            print("Reading data...")
+        self.data = self.data_sanity_check(data)
+        self.custom_data = custom_data
+        if progressbar:
+            print("...done.")
         if progressbar:
             print("Setting up PyMC model...")
         self.setup_mcmodel()
