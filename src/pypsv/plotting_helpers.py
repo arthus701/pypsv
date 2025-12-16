@@ -10,6 +10,7 @@ def add_input_data_to_ax(
     input_data,
     which,
     rc_height=1.5,
+    show_uids=False,
     **kwargs,
 ):
     """
@@ -27,6 +28,8 @@ def add_input_data_to_ax(
         Which component to draw
     rc_height : float, optional
         The height of the Radiocarbon violins, default is 1.5
+    show_uids : bool, optional
+        If True, annotate the records by their label
     **kwargs
         Will be passed to the matplotlib routines. Can be used to specify color
         etc.
@@ -82,6 +85,8 @@ def add_input_data_to_ax(
                 color=color,
                 **kwargs,
             )
+            if show_uids:
+                ax.text(x_median, row[which], idx)
         elif "uniform" in row['Age type'] or "Gaussian" in row['Age type']:
             ax.errorbar(
                 row['Age'],
@@ -94,6 +99,8 @@ def add_input_data_to_ax(
                 color=color,
                 **kwargs,
             )
+            if show_uids:
+                ax.text(row['Age'], row[which], idx)
         elif "absolute" in row['Age type']:
             ax.errorbar(
                 row['Age'],
@@ -104,3 +111,5 @@ def add_input_data_to_ax(
                 color=color,
                 **kwargs,
             )
+            if show_uids:
+                ax.text(row['Age'], row[which], idx)
