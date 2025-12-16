@@ -152,7 +152,7 @@ class PSVCurve(object):
                 [
                     [prior_chol, zero_block, zero_block],
                     [zero_block, prior_chol, zero_block],
-                    [zero_block, zero_block, prior_chol],
+                    [zero_block, zero_block, 2 * prior_chol],
                 ],
             )
             self.prior_chol = (
