@@ -1,7 +1,11 @@
 import numpy as np
+import arviz as az
+
 import pandas as pd
 
 from pymagglobal.utils import nez2dif
+
+rng = np.random.default_rng()
 
 
 def generate_curve_output(
@@ -16,7 +20,7 @@ def generate_curve_output(
     Parameters
     ----------
     iData : object
-        Input data object containing observed and posterior data.
+        Inference data object containing observed and posterior data.
     thin : int, optional
         Thinning factor for the samples, default is 1.
     type : str, optional
@@ -91,7 +95,7 @@ def generate_data_output(
     Parameters
     ----------
     iData : object
-        Input data object containing observed and posterior data.
+        Inference data object containing observed and posterior data.
     thin : int, optional
         Thinning factor for the samples, default is 1.
 
@@ -131,3 +135,56 @@ def generate_data_output(
         data[label] = _this_data
 
     return data
+
+
+def calculate_hdis_curve(curve, iData, thin=1, hdi_prob=0.68):
+    """
+    Calculate prior and posterior Highest Density Intervals (HDIs) along the
+    PSV curve from the respective ensembles.
+
+    Parameters
+    ----------
+    curve : PSVcurve
+        The curve used to generate the data.
+    iData : object
+        Inference data object containing observed and posterior data.
+    thin : int, optional
+        Thinning factor for the samples, default is 1.
+    hdi_prob : float, optional
+        The desired probability of the HDIs. Default is 0.68.
+
+    Returns
+    -------
+    knots : array
+        The curve knot points
+    prior_hdis : dict
+        Dictionary containing the HDIs along the curve. Keys are 'D', 'I' and
+        'F', referring to declination, inclination and intensity
+    posterior_hdis : dict
+        The same as prior_hdis, but for the posterior
+    """
+    knots, posterior_samples = generate_curve_output(iData, thin=thin)
+
+    n_samps = posterior_samples['D'].shape[1]
+
+    prior_samples_nez = curve.prior_mean[:, None] \
+        + curve.prior_chol @ rng.normal(size=(3 * len(knots), n_samps))
+    prior_samples_nez = prior_samples_nez.reshape(len(knots), 3, n_samps)
+    prior_samples_nez = prior_samples_nez.transpose(1, 0, 2)
+
+    prior_samples = nez2dif(*prior_samples_nez)
+
+    prior_samples = np.array(prior_samples)
+
+    prior_hdis = posterior_hdis = {
+        'D': az.hdi(prior_samples[0].T, hdi_prob=hdi_prob),
+        'I': az.hdi(prior_samples[1].T, hdi_prob=hdi_prob),
+        'F': az.hdi(prior_samples[2].T, hdi_prob=hdi_prob),
+    }
+    posterior_hdis = {
+        'D': az.hdi(posterior_samples['D'].T, hdi_prob=hdi_prob),
+        'I': az.hdi(posterior_samples['I'].T, hdi_prob=hdi_prob),
+        'F': az.hdi(posterior_samples['F'].T, hdi_prob=hdi_prob),
+    }
+
+    return knots, prior_hdis, posterior_hdis
