@@ -17,8 +17,8 @@ from pypsv.utils import matern32
 rng = np.random.default_rng()
 data_dir = AppDirs("pypsv").user_data_dir
 
-tau_ND = 500
 sigma_ND = 95
+tau_ND = 500
 R = 2800
 
 
@@ -26,7 +26,11 @@ class LargeScaleModel(FieldModel):
     def __init__(self, l_max=1):
         if 5 < l_max:
             raise ValueError(
-                'Maximum SH degree for mixed model is 5.'
+                'Maximum SH degree for large scale model is 5.'
+            )
+        if l_max < 1:
+            raise ValueError(
+                'Minimum SH degree for large scale model is 1.'
             )
         if not os.path.exists(data_dir):
             warnings.warn(
