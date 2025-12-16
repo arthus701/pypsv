@@ -1,6 +1,11 @@
 
 Changelog
 =========
+2025-12-16 v1.2.0
+-----------------
+* Add highest density interval calculation to outputs
+* Change the default variance and include a geometry factor for the down component
+* Include the option to show data IDs when adding to an axis
 
 2025-12-10 v1.1.0
 -----------------
