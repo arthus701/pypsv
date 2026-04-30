@@ -30,6 +30,10 @@ if you want an editable installation.
 
 ## Citation
 
-For now, an accompanying manuscript is still under review. Until it becomes available, please cite the zenodo release:
-
-[![DOI](https://zenodo.org/badge/883736343.svg)](https://doi.org/10.5281/zenodo.16874929)
+When using the software, please cite [![DOI](https://img.shields.io/badge/DOI-10.1029%2F2025jb032670-blue.svg)](http://doi.org/10.1029/2025jb032670)
+```
+Schanner, M. A., R. Meyer, and L. V. de Groot. (2026)  
+Bayesian Inference of Local Paleosecular Variation From Sparse Paleomagnetic Data
+Journal of Geophysical Research: Solid Earth 131.2 (2026).
+DOi: 10.1029/2025jb032670.
+```
