@@ -34,6 +34,6 @@ When using the software, please cite [![DOI](https://img.shields.io/badge/DOI-10
 ```
 Schanner, M. A., R. Meyer, and L. V. de Groot. (2026)  
 Bayesian Inference of Local Paleosecular Variation From Sparse Paleomagnetic Data
-Journal of Geophysical Research: Solid Earth 131.2 (2026).
+Journal of Geophysical Research: Solid Earth 131.2
 DOi: 10.1029/2025jb032670.
 ```
